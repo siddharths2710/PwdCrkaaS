@@ -1,0 +1,8 @@
+FROM python:3.9-alpine
+RUN pip3 install flask Flask-Debug redis jsonpickle requests minio
+RUN mkdir -p /app
+COPY rest-server.py /app
+WORKDIR /app
+
+EXPOSE 5000
+CMD ["python3", "rest-server.py"]
