@@ -4,6 +4,7 @@ from app.config import Config
 # from flask_debug import Debug
 import logging
 
+# https://stackoverflow.com/questions/20646822/how-to-serve-static-files-in-flask
 template_dir = os.path.abspath('app/frontend/dist')
 static_dir = os.path.abspath('app/frontend/dist')
 print(template_dir)

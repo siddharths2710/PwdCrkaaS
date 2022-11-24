@@ -16,12 +16,6 @@ import minio
 __version__ = "api/v1"
 
 
-@app.route("/")
-def hello():
-    # return "Welcome to PwdCrkaaS"
-    return render_template('index.html', name='abc')
-
-
 @app.route(f"/{__version__}/crack", methods=['POST'])
 def crack():
     return "Cracking.."
@@ -30,3 +24,8 @@ def crack():
 @app.route(f"/{__version__}/wordlist", methods=['GET'])
 def list_wordlist():
     return "[wordlist]"
+
+
+@app.route("/*")
+def hello():
+    return render_template('index.html', name='abc')
