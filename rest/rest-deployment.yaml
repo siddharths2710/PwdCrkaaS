@@ -1,21 +1,21 @@
 apiVersion: apps/v1 #  for k8s versions before 1.9.0 use apps/v1beta2  and before 1.8.0 use extensions/v1beta1
 kind: Deployment
 metadata:
-  name: demucs-rest
+  name: pwdcrkaas-rest
 spec:
   selector:
     matchLabels:
-      app: demucs-rest
+      app: pwdcrkaas-rest
   replicas: 1
   revisionHistoryLimit: 1
   template:
     metadata:
       labels:
-        app: demucs-rest
+        app: pwdcrkaas-rest
     spec:
       containers:
-      - name: demucs-rest
-        image: siddharths2710/demucs-rest:1.0.0
+      - name: pwdcrkaas-rest
+        image: siddharths2710/pwdcrkaas-rest:1.0.0
         resources:
           limits:
             memory: "128Mi"

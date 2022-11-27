@@ -30,5 +30,5 @@ resources:
 
 ##
 buckets:
-  - name: demucs-bucket
+  - name: pwdcrkaas-bucket
     policy: public
