@@ -5,7 +5,6 @@ import shutil
 import tempfile
 import subprocess
 import minio.error
-import pandas as pd
 import sqlalchemy as db
 
 from config import *

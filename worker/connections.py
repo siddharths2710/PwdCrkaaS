@@ -12,7 +12,7 @@ minioClient = minio.Minio(f"{MinIOConfig.HOST}:{MinIOConfig.PORT}",
                secret_key=MinIOConfig.PWD, secure=False)
 
 class DBEntities(object):
-     ENGINE = db.create_engine(f"mysql://{MySQLConfig.USER}:{MySQLConfig.PWD}@{MySQLConfig.URI}/{MySQLConfig.DB}")
+     ENGINE = db.create_engine(f"mysql+pymysql://{MySQLConfig.USER}:{MySQLConfig.PWD}@{MySQLConfig.URI}/{MySQLConfig.DB}")
      CONNECTION = ENGINE.connect()
      META = db.MetaData()
 
@@ -22,7 +22,8 @@ class DBEntities(object):
         db.Column('crackingMode', db.String, nullable=False),
         db.Column('hashFile', db.String, nullable=False),
         db.Column('wordlistFile', db.String),
-        db.Column('hashType', server_default='crypt')
+        db.Column('hashType', db.String, server_default='crypt'),
+        db.Column('status', db.String, server_default='pending')
     )
 
      PASSWORD_TABLE = db.Table(

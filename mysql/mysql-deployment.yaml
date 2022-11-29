@@ -19,8 +19,12 @@ spec:
           image: mysql:5.7
           imagePullPolicy: IfNotPresent
           env:
-            MYSQL_DATABASE: test
-            MYSQL_ROOT_PASSWORD: 12345
+            - name: MYSQL_ROOT_USER
+              value: root
+            - name: MYSQL_DATABASE
+              value: local_db 
+            - name: MYSQL_ROOT_PASSWORD
+              value: pwned
           ports:
             - name: mysql
               protocol: TCP

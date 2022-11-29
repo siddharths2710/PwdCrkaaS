@@ -11,8 +11,10 @@ run: ## Run the pwdcrkaas spliting the tracks placed in the input folder
 		-v $(current-dir)output:/data/output \
 		pwdcrkaas-worker
 
-push:
+tag:
 	docker tag pwdcrkaas-worker $(DOCKERUSER)/pwdcrkaas-worker:$(VERSION)
+
+push:
 	docker push $(DOCKERUSER)/pwdcrkaas-worker:$(VERSION)
 	docker tag pwdcrkaas-worker $(DOCKERUSER)/pwdcrkaas-worker:latest
 	docker push $(DOCKERUSER)/pwdcrkaas-worker:latest

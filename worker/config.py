@@ -35,7 +35,7 @@ class MinIOConfig(object):
     WORDLIST_BUCKET = os.getenv('WORDLIST_BUCKET') or 'wordlist-bucket'
 
 class MySQLConfig(object):
-    DB = os.getenv('MYSQL_DB') or 'foo'
-    URI = os.getenv('MYSQL_URI') or 'localhost'
-    USER = os.getenv('MYSQL_USER') or 'scott'
-    PWD = os.getenv('MYSQL_PWD') or 'tiger'
+    DB = os.getenv('MYSQL_DB') or 'local_db'
+    URI = os.getenv('MYSQL_URI') or 'mysql'
+    USER = os.getenv('MYSQL_USER') or 'root'
+    PWD = os.getenv('MYSQL_PWD') or 'pwned'

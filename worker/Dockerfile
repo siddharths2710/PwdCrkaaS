@@ -9,8 +9,8 @@ RUN apt update && apt install john -y
 
 
 RUN mkdir /app
-RUN python3 -m pip install redis minio sqlalchemy
+RUN python3 -m pip install redis minio sqlalchemy pymysql
 COPY config.py worker.py connections.py /app/
 WORKDIR /app
 
-CMD [ "python3", "worker.py"]
+#CMD [ "python3", "worker.py"]
