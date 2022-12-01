@@ -78,7 +78,7 @@ except Exception as e: log_output("Error: " + repr(e), log_level=LOGLEVEL.ERROR)
 
 while True:
         is_terminated, is_completed = False, False
-        terminate_id = redisClient.lpop(MinIOConfig.TERMINATE_KEY, timeout=0)
+        terminate_id = redisClient.lpop(RedisConfig.TERMINATE_KEY, timeout=0)
         if terminate_id is not None: is_terminated = _handle_termination(terminate_id); continue
         for user_id in id_process_map:
             if id_process_map[user_id].poll() == 0: is_completed = True; break
