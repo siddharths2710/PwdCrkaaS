@@ -1,13 +1,24 @@
-import { useEffect } from 'react';
-import { useRef, useState } from 'react';
-import { Form, redirect, useNavigation } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useState } from 'react';
+import { Form, redirect, useActionData } from 'react-router-dom';
 
-export async function submitTask({request, params}) {
-    const formData = await request.formData();
-    const updates = Object.fromEntries(formData);
-    console.log(updates);
-    const task = { id: 10 };
-    return redirect(`/app/task/${task.id}`);
+export async function submitTask({ request, params }) {
+  const formData = await request.formData();
+  // const updates = Object.fromEntries(formData);
+  // console.log(updates);
+  let response = await fetch('/api/v1/crack', {
+    method: 'POST',
+    body: formData
+  });
+
+  if (response.status == 400) {
+    return await response.json();
+  } else if (response.status != 200) {
+    throw Error('Failed to submitted the task');
+  }
+
+  const task = await response.json();
+  return redirect(`/app/task/${task.id}`);
 }
 
 function Wordlist({ wordlist, selectedWordlist, changeWordlist }) {
@@ -22,7 +33,7 @@ function Wordlist({ wordlist, selectedWordlist, changeWordlist }) {
   return (
     <div className='wordlistChoice'>
       <h3 className='wordlistLabel'>Choose a wordlist</h3>
-      <select className='button' id="wordlist" value={selectedWordlist} onChange={changeWordlist}>
+      <select className='button' id="wordlist" name="wordlist" value={selectedWordlist} onChange={changeWordlist}>
         {wordlist.map((name, i) => (
           <option key={name} value={i}>{name}</option>
         ))}
@@ -38,7 +49,6 @@ function getWordlist(wordlist) {
 }
 
 function Home() {
-  const navigation = useNavigation();
   const [inputTypeFile, setInputTypeFile] = useState(true);
   const [file, setFile] = useState(null);
   const [inputText, setInputText] = useState('');
@@ -52,6 +62,9 @@ function Home() {
   // const wordlist = ['a', 'bbbbbbbbbbbbbbbbbbbbbbbbbbb', 'c'];
   const [wordlist, setWordlist] = useState(null);
   const [selectedWordlist, setSelectedWordlist] = useState(0);
+
+  const errors = useActionData();
+  console.log({ errors });
 
   useEffect(() => {
     getWordlist(['a', 'bb', 'c']).then(wordlist => {
@@ -72,7 +85,7 @@ function Home() {
   }
 
   const changeHashType = (event) => {
-    setSelectedCrack(event.target.value);
+    setSelectedHashType(event.target.value);
   }
 
   const changeWordlist = (event) => {
@@ -113,7 +126,7 @@ function Home() {
                 className='button hiddenInput'
                 type="file"
                 id="file"
-                name="file"
+                name="hashFile"
                 required
                 onChange={changeInputFile}
               />
@@ -123,6 +136,7 @@ function Home() {
             : <div className='hashInput textInput'>
               <textarea
                 onChange={changeInputText}
+                name="hashText"
                 value={inputText}
                 style={{ width: 500, height: 150, padding: 8 }}
               />
@@ -131,13 +145,13 @@ function Home() {
         </div>
         <div className="card">
           <h3 className='crackingLabel'>Choose the hash type (crypt for unknown)</h3>
-          <select className='button' id="crackingType" value={selectedHashType} onChange={changeHashType}>
+          <select className='button' id="hashType" name="hashType" value={selectedHashType} onChange={changeHashType}>
             {hashTypes.map((hType, i) => (
               <option key={hType} value={i}>{hType}</option>
             ))}
           </select>
           <h3 className='crackingLabel'>Choose a cracking method</h3>
-          <select className='button' id="crackingType" value={selectedCrack} onChange={changeCrackingType}>
+          <select className='button' id="crackingType" name="crackingType" value={selectedCrack} onChange={changeCrackingType}>
             {crackingTypes.map((cType, i) => (
               <option key={cType} value={i}>{cType}</option>
             ))}

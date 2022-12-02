@@ -1,16 +1,11 @@
 #!/bin/sh
 
-cd /app
+cd /svr
 
+# export FLASK_DEBUG=1
 export FLASK_APP=app
 
 echo "Existing directory at " $(pwd)
 
-# if [ -f instance/flaskr.sqlite ]
-# then
-#     echo "Use existing database"
-# else
-#     flask init-db
-# fi
-
 nohup flask run -h 0.0.0.0 -p $FLASK_PORT
+# flask run -h 0.0.0.0 -p $FLASK_PORT

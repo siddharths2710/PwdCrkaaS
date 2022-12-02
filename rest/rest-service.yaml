@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: demucs-rest-svc
+  name: pwdcrkaas-svc
 spec:
   selector:
-    app: demucs-rest
+    app: pwdcrkaas-rest
   ports:
-  - name: demucs-rest
+  - name: pwdcrkaas-rest
     port: 5000
     targetPort: 5000

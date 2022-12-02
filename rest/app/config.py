@@ -15,9 +15,12 @@ class Config(object):
     INPUT_BUCKET = os.environ.get('INPUT_BUCKET') or 'input-bucket'
     WORDLIST_BUCKET = os.environ.get('WORDLIST_BUCKET') or 'wordlist-bucket'
 
-    MYSQL_DB = os.environ.get('MYSQL_DB') or 'foo'
-    MYSQL_URI = os.environ.get('MYSQL_URI') or 'localhost'
-    MYSQL_USER = os.environ.get('MYSQL_USER') or 'scott'
-    MYSQL_PWD = os.environ.get('MYSQL_PWD') or 'tiger'
+    MYSQL_DB = os.environ.get('MYSQL_DB') or 'local_db'
+    MYSQL_HOST = os.environ.get('MYSQL_HOST') or 'localhost'
+    MYSQL_PORT = os.environ.get('MYSQL_PORT') or '3306'
+    MYSQL_USER = os.environ.get('MYSQL_USER') or 'root'
+    MYSQL_PWD = os.environ.get('MYSQL_PWD') or 'pwned'
 
+    WORK_KEY = "toWorker"
+    TERMINATE_KEY = "toTerminate"
 

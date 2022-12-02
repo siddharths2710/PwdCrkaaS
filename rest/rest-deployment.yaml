@@ -1,24 +1,24 @@
 apiVersion: apps/v1 #  for k8s versions before 1.9.0 use apps/v1beta2  and before 1.8.0 use extensions/v1beta1
 kind: Deployment
 metadata:
-  name: demucs-rest
+  name: pwdcrkaas-rest
 spec:
   selector:
     matchLabels:
-      app: demucs-rest
+      app: pwdcrkaas-rest
   replicas: 1
   revisionHistoryLimit: 1
   template:
     metadata:
       labels:
-        app: demucs-rest
+        app: pwdcrkaas-rest
     spec:
       containers:
-      - name: demucs-rest
-        image: siddharths2710/demucs-rest:1.0.0
+      - name: pwdcrkaas-rest
+        image: shreyash14s/pwdcrkaas-rest:1.0.0
         resources:
           limits:
-            memory: "128Mi"
+            memory: "2048Mi"
             cpu: "500m"
         imagePullPolicy: IfNotPresent
         ports:
@@ -30,11 +30,21 @@ spec:
           value: redis
         - name: REDIS_PORT
           value: "6379"
-        - name: MINIO_HOST
+        - name: MINIO_SERVICE_HOST
           value: minio
-        - name: MINIO_PORT
+        - name: MINIO_SERVICE_PORT
           value: "9000"
-        - name: MINIO_USER
+        - name: MINIO_SERVICE_USER
           value: "rootuser"
-        - name: MINIO_PWD
+        - name: MINIO_SERVICE_PASS
           value: "rootpass123"
+        - name: MYSQL_HOST
+          value: mysql
+        - name: MYSQL_PORT
+          value: "3306"
+        - name: MYSQL_DB
+          value: "local_db"
+        - name: MYSQL_USER
+          value: "root"
+        - name: MYSQL_PWD
+          value: "pwned"

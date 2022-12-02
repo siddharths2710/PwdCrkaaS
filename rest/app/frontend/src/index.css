@@ -157,6 +157,10 @@ select {
   width: 160px;
 }
 
+#hashType {
+  width: 160px;
+}
+
 .wordlistChoice {
   margin-top: 10px;
 }
@@ -235,6 +239,7 @@ td {
 }
 
 .button-copy {
+  width: 72px;
   padding: 0.4em 0.4em;
   border-top-left-radius: 0px;
   border-bottom-left-radius: 0px;
@@ -243,11 +248,10 @@ td {
 }
 
 .urlBox {
-  /* background-color: #1a1a1a; */
   padding: 0.4em 0.4em;
-  /* height: 38px; */
-  /* min-height: 38px; */
-  /* display: inline-flex; */
+  /* https://stackoverflow.com/a/53549766/4095334 */
+  user-select: all;
+  cursor: pointer;
 }
 
 .urlBoxWrapper {

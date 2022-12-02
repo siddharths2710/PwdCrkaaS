@@ -20,7 +20,7 @@ spec:
           - path: /
             backend:
               service:
-                name: demucs-rest-svc
+                name: pwdcrkaas-svc
                 port:
                   number: 5000
             pathType: Prefix
