@@ -60,8 +60,7 @@ def save_file_to_minio(bucket, filename, data, size):
 
 @app.route(f"/{__version__}/crack", methods=["POST"])
 def crack():
-    # gen_id = generate_nonc_uuid()
-    gen_id = "abc"
+    gen_id = generate_nonc_uuid()
 
     _, tempfile_path = tempfile.mkstemp()
     hashFile = f'{gen_id}'
