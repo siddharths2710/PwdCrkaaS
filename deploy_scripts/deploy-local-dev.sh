@@ -45,9 +45,9 @@ kubectl $OPERATION -f ../mysql/mysql-pvc.yaml &
 kubectl $OPERATION -f ../mysql/mysql-deployment.yaml
 kubectl $OPERATION -f ../mysql/mysql-service.yaml
 
-#kubectl $OPERATION -f ../rest/rest-deployment.yaml
-#kubectl $OPERATION -f ../rest/rest-service.yaml
-#kubectl $OPERATION -f ../rest/rest-ingress.yaml
+kubectl $OPERATION -f ../rest/rest-deployment.yaml
+kubectl $OPERATION -f ../rest/rest-service.yaml
+kubectl $OPERATION -f ../rest/rest-ingress.yaml
 
 if [ $DELETE -ne 0 ]; then
     echo "Port forwarding redis and minio"

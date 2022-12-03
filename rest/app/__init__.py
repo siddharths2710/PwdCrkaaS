@@ -8,7 +8,7 @@ import logging
 template_dir = os.path.abspath('app/frontend/dist')
 static_dir = os.path.abspath('app/frontend/dist')
 print(template_dir)
-app = Flask(__name__, static_url_path='',
+app = Flask(__name__, static_url_path='/static',
             static_folder=static_dir, template_folder=template_dir)
 
 app.config.from_object(Config)
