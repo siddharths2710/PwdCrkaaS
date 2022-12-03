@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: pwdcrkaas-svc
+  name: pwdcrkaas-rest-svc
 spec:
   selector:
     app: pwdcrkaas-rest

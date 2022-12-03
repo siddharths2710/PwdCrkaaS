@@ -20,7 +20,7 @@ spec:
           - path: /
             backend:
               service:
-                name: pwdcrkaas-svc
+                name: pwdcrkaas-rest-svc
                 port:
                   number: 5000
             pathType: Prefix

@@ -1,26 +1,30 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mysql-db
+  name: mysql
 spec:
   selector:
     matchLabels:
-      app: mysql-db
+      app: mysql
   replicas: 1
   revisionHistoryLimit: 0
   template:
     metadata:
       labels:
-        app: mysql-db
+        app: mysql
     spec:
-      hostname: mysql-db
+      hostname: mysql
       containers:
-        - name: mysql-db
+        - name: mysql
           image: mysql:5.7
           imagePullPolicy: IfNotPresent
           env:
-            MYSQL_DATABASE: test
-            MYSQL_ROOT_PASSWORD: 12345
+            - name: MYSQL_ROOT_USER
+              value: root
+            - name: MYSQL_DATABASE
+              value: local_db 
+            - name: MYSQL_ROOT_PASSWORD
+              value: pwned
           ports:
             - name: mysql
               protocol: TCP

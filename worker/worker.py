@@ -1,89 +1,121 @@
-print("Worker Init")
-
 import os
 import sys
-import glob
 import time
-import redis
-import minio
 import shutil
-import platform
 import tempfile
 import subprocess
 import minio.error
-from enum import Enum
+import sqlalchemy as db
+
+from config import *
+from connections import *
 
 __author__ = "Siddharth Srinivasan"
 
-"""
-1. Read worker queue from redis; get hash
-2. Borrow song from queue bucket in minio, and write to tempfile
-3. Run demucs against song
-4. Transfer output songs back to minio
-"""
-redisHost = os.getenv("REDIS_HOST") or "localhost"
-redisPort = int(os.getenv("REDIS_PORT") or "6379")
 
-INPUT_BUCKET_NAME = os.getenv("INPUT_BUCKET_NAME") or 'lab7-queue'
-OUTPUT_BUCKET_NAME = os.getenv("OUTPUT_BUCKET_NAME") or 'lab7-output'
+# https://stackoverflow.com/questions/33053241/sqlalchemy-if-table-does-not-exist
 
-class LOGLEVEL(Enum):
-    INFO = 0
-    DEBUG = 1
-    ERROR = 2
 
-redisHost, redisPort = os.getenv("REDIS_HOST") or "localhost", int(os.getenv("REDIS_PORT") or "6379")
-minioHost, minioPort = os.getenv("MINIO_HOST") or "localhost", int(os.getenv("MINIO_PORT") or "9000")
-minioUser, minioPwd = os.getenv('MINIO_USER') or "rootuser", os.getenv('MINIO_PWD') or "rootpass123"
+# https://www.tutorialspoint.com/sqlalchemy/sqlalchemy_core_creating_table.htm
+# https://towardsdatascience.com/sqlalchemy-python-tutorial-79a577141a91
 
-logKey = "{}.worker.info".format(platform.node())
-log_level = LOGLEVEL.INFO
+id_hash_map = {}
+id_process_map = {}
+insert_query = db.insert(DBEntities.PASSWORD_TABLE)
 
-redisClient = redis.StrictRedis(host=redisHost, port=redisPort, db=0)
-minioClient = minio.Minio(f"{minioHost}:{minioPort}",
-               access_key=minioUser,
-               secret_key=minioPwd, secure=False)
+def _get_user_id(pwd_hash):
+    for user_id in id_hash_map:
+        if pwd_hash in id_hash_map[user_id]:
+            return user_id
+    return None
 
-def log_output(message, key=logKey, log_level=log_level):
+def _handle_termination(terminate_id):
+    if terminate_id not in id_process_map: redisClient.lpush(RedisConfig.TERMINATE_KEY, terminate_id); return False
+    prc = id_process_map[terminate_id]
+    prc.terminate()
+    time.sleep(5)
+    id_process_map.pop(terminate_id)
+    return True
+
+def _publish_password_outputs():
+    try:
+        pwd_file = open(JohnConfig.OUTPUT_FILE, 'r')
+        outputs_list = []
+        for line in pwd_file:
+            hash, pwd = line.split(':')
+            user_id = _get_user_id(hash)
+            if user_id is None:
+                pwd_file.close()
+                raise Exception("User id not found for hash: " + hash)
+            outputs_list.append({
+                'userId': user_id, 'hash': hash, 'password': pwd, 'hash_type': 'crypt'
+            })
+        result_proxy = DBEntities.CONNECTION.execute(insert_query, outputs_list)
+        pwd_file.close()
+    except FileNotFoundError as e:
+        log_output("_publish_password_outputs: Pwd output file not created for flushing to db", log_level=LOGLEVEL.ERROR)
+    except Exception as e:
+        log_output("_publish_password_outputs: %s" % repr(e), log_level=LOGLEVEL.ERROR)
+
+def log_output(message, key=LogConfig.KEY, log_level=LogConfig.LEVEL):
     print("Worker", log_level.name, ":", message, file=sys.stdout)
     redisClient.lpush('logging', f"Worker:{log_level.name}:{key}:{message}")
 
 log_output("Started Worker pod")
 
 try:
-    if not minioClient.bucket_exists(OUTPUT_BUCKET_NAME): minioClient.make_bucket(OUTPUT_BUCKET_NAME)
-    while not minioClient.bucket_exists(INPUT_BUCKET_NAME):
-                log_output(f"{INPUT_BUCKET_NAME}: Not created")
+    if not DBEntities.ENGINE.dialect.has_table(DBEntities.CONNECTION, DBEntities.PASSWORD_TABLE): 
+        DBEntities.META.create_all(DBEntities.ENGINE)
+    while not DBEntities.ENGINE.dialect.has_table(DBEntities.CONNECTION, DBEntities.USER_TABLE): 
+        log_output("User_Inputs db still to be created")
+    while not minioClient.bucket_exists(MinIOConfig.WORDLIST_BUCKET):
+                log_output(f"{MinIOConfig.WORDLIST_BUCKET}: Not created")
                 time.sleep(1000)
                 continue
-except minio.error.S3Error as e: log_output(f"{OUTPUT_BUCKET_NAME} creation error: " + repr(e), log_level=LOGLEVEL.ERROR)
+except minio.error.S3Error as e: log_output(f"{MinIOConfig.WORDLIST_BUCKET} creation error: " + repr(e), log_level=LOGLEVEL.ERROR)
 except minio.error.InvalidResponseError as e: log_output("MinIO API Error: " + repr(e), log_level=LOGLEVEL.ERROR)
 except Exception as e: log_output("Error: " + repr(e), log_level=LOGLEVEL.ERROR)
 
 while True:
-        work = redisClient.blpop("toWorker", timeout=0)
-        mp3_hash = work[1].decode('utf-8')
-        log_output(f"Received {mp3_hash} for separation")
+        is_terminated, is_completed = False, False
+        terminate_id = redisClient.lpop(RedisConfig.TERMINATE_KEY, timeout=0)
+        if terminate_id is not None: is_terminated = _handle_termination(terminate_id); continue
+        for user_id in id_process_map:
+            if id_process_map[user_id].poll() == 0: is_completed = True; break
+        if is_terminated or is_completed: _publish_password_outputs(); continue
+                
+        
+        work = redisClient.lpop(MinIOConfig.WORK_KEY, timeout=0)
+        user_id = work[1].decode('utf-8')
+        log_output(f"Received cracking request from user: {user_id}")
         try:
+            input_query = DBEntities.USER_TABLE.select().where(DBEntities.USER_TABLE.c.userId == user_id)
+            query_output = DBEntities.CONNECTION.execute(input_query)
+            _, crackingMode, hashFile, wordlistFile, hashType = query_output.fetchone()
+            
             dir_path = tempfile.mkdtemp()
-            mp3_path, output_path = os.path.join(dir_path, f"{mp3_hash}.mp3"), os.path.join(dir_path, "output")
-            os.mkdir(output_path)
-            minioClient.fget_object(INPUT_BUCKET_NAME, mp3_hash, mp3_path)
-            log_output("Running demucs separation utility")
-            result = subprocess.run(["python3", "-m", "demucs.separate", "--mp3", "--out", output_path, mp3_path],
-                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            if result.returncode:
-                log_output(f"Demucs separate failure: {result.stdout.decode('utf-8')}: {result.stderr.decode('utf-8')}", log_level=LOGLEVEL.ERROR)
-                continue
+            input_path = os.path.join(dir_path, f"{user_id}.txt")
+            minioClient.fget_object(MinIOConfig.INPUT_BUCKET, user_id, input_path)
+            
+            log_output("Running password cracking utility")
+            
+            cmd_params = ["/usr/sbin/john"]
+            if crackingMode == "wordlist":
+                wordlist_path = os.path.join(dir_path, "wordlist.txt")
+                minioClient.fget_object(MinIOConfig.WORDLIST_BUCKET, wordlistFile, wordlist_path)
+                cmd_params.append(f"--wordlist:\"{wordlist_path}\"")
+            elif crackingMode is not None:
+                cmd_params.append(f"--{crackingMode}")
 
-            for path, subdirs, files in os.walk(output_path):
-                for name in files:
-                    output_file = os.path.join(path, name)
-                    minio_output_name = f"{mp3_hash}/{name}"
-                    log_output(f"Got output {name} for {minio_output_name}")
-                    minioClient.fput_object(
-                        OUTPUT_BUCKET_NAME, minio_output_name, output_file, content_type="audio/mpeg")
-            shutil.rmtree(dir_path)
+            if hashType is None or hashType == 'crypt':
+                cmd_params.append("--format=crypt")
+            else:
+                cmd_params.append(f"--format={hashType}")
+
+            cmd_params.append(input_path)
+
+            result = subprocess.run(cmd_params)
+            id_process_map[user_id] = result
         except minio.error.S3Error as e: log_output("MinIO Bucket/File Operation Failure: " + repr(e), log_level=LOGLEVEL.ERROR)
         except minio.error.InvalidResponseError as e: log_output("MinIO API Error: " + repr(e), log_level=LOGLEVEL.ERROR)
         except Exception as e: log_output("Error: " + repr(e), log_level=LOGLEVEL.ERROR)

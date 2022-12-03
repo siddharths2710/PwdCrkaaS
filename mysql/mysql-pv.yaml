@@ -6,6 +6,7 @@ metadata:
     type: local
     name: mysql-pv
 spec:
+  storageClassName: manual
   capacity:
     storage: 3Gi
   accessModes:
