@@ -2,10 +2,10 @@ VERSION=1.0.0
 DOCKERUSER=siddharths2710
 
 build:
-	docker build -f Dockerfile-rest -t demucs-rest .
+	docker build -f Dockerfile-rest -t pwdcrkaas-rest .
 
 push:
-	docker tag demucs-rest $(DOCKERUSER)/demucs-rest:$(VERSION)
-	docker push $(DOCKERUSER)/demucs-rest:$(VERSION)
-	docker tag demucs-rest $(DOCKERUSER)/demucs-rest:latest
-	docker push $(DOCKERUSER)/demucs-rest:latest
+	docker tag pwdcrkaas-rest $(DOCKERUSER)/pwdcrkaas-rest:$(VERSION)
+	docker push $(DOCKERUSER)/pwdcrkaas-rest:$(VERSION)
+	docker tag pwdcrkaas-rest $(DOCKERUSER)/pwdcrkaas-rest:latest
+	docker push $(DOCKERUSER)/pwdcrkaas-rest:latest

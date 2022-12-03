@@ -1,25 +1,27 @@
 apiVersion: apps/v1 #  for k8s versions before 1.9.0 use apps/v1beta2  and before 1.8.0 use extensions/v1beta1
 kind: Deployment
 metadata:
-  name: demucs-worker
+  name: pwdcrkaas-worker
 spec:
   selector:
     matchLabels:
-      app: demucs-worker
+      app: pwdcrkaas-worker
   replicas: 1
   revisionHistoryLimit: 0
   template:
     metadata:
       labels:
-        app: demucs-worker
+        app: pwdcrkaas-worker
     spec:
       containers:
-      - name: demucs-worker
-        image: siddharths2710/demucs-worker:1.0.0
+      - name: pwdcrkaas-worker
+        image: siddharths2710/pwdcrkaas-worker:1.0.0
+        command: [ "/bin/bash", "-c", "--" ]
+        args: [ "while true; do sleep 30; done;" ]
         resources:
           limits:
-            memory: "4Gi"
-            cpu: "2200m"
+            memory: "2Gi"
+            cpu: "1700m"
         imagePullPolicy: IfNotPresent
         ports:
           - containerPort: 5000

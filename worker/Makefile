@@ -2,21 +2,19 @@ VERSION=1.0.0
 DOCKERUSER=siddharths2710
 
 build:
-	docker build -f Dockerfile -t demucs-worker .
+	docker build -f Dockerfile -t pwdcrkaas-worker .
 
-run: ## Run the demucs spliting the tracks placed in the input folder
+run: ## Run the pwdcrkaas spliting the tracks placed in the input folder
 	docker run --rm -i \
-		--name=demucs \
+		--name=pwdcrkaas \
 		-v $(current-dir)input:/data/input \
 		-v $(current-dir)output:/data/output \
-		-v $(current-dir)models:/data/models \
-		demucs-worker \
-		"python3 -m demucs.separate --out /data/output \
-		/data/input/$(track)"
+		pwdcrkaas-worker
 
+tag:
+	docker tag pwdcrkaas-worker $(DOCKERUSER)/pwdcrkaas-worker:$(VERSION)
 
 push:
-	docker tag demucs-worker $(DOCKERUSER)/demucs-worker:$(VERSION)
-	docker push $(DOCKERUSER)/demucs-worker:$(VERSION)
-	docker tag demucs-worker $(DOCKERUSER)/demucs-worker:latest
-	docker push $(DOCKERUSER)/demucs-worker:latest
+	docker push $(DOCKERUSER)/pwdcrkaas-worker:$(VERSION)
+	docker tag pwdcrkaas-worker $(DOCKERUSER)/pwdcrkaas-worker:latest
+	docker push $(DOCKERUSER)/pwdcrkaas-worker:latest
