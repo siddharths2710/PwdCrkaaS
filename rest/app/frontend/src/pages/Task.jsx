@@ -1,20 +1,17 @@
-import React, { useEffect, useRef } from 'react';
-import { useState } from 'react';
+import React from 'react';
 import { useLoaderData } from 'react-router-dom';
+import { useTimedState } from '../helper';
 
-async function getTaskDetails({ request, params }) {
-  // return new Promise((res, rej) => {
-  //   let passwords = [
-  //     // { hash: 'aaaa', password: 'bbbb', hash_type: 'crypt', salt: 'ddd' }
-  //   ];
-  //   setTimeout(() => res({ id: taskId, passwords }), 1000);
-  // })
+async function getTaskDetails({ params }) {
   const url = '/api/v1/task-details?' + new URLSearchParams(params);
-  let data = await fetch(url);
-  // console.log(data);
-  // console.log(request);
-  // console.log(params);
-  return await data.json();
+  let response = await fetch(url);
+
+  if (response.status != 200) {
+    // Show the error page
+    let errorMessage = await response.json();
+    throw Error(errorMessage.error || 'Failed to submitted the task');
+  }
+  return await response.json();
 }
 
 export async function taskLoader({ request, params }) {
@@ -23,32 +20,29 @@ export async function taskLoader({ request, params }) {
   return { task };
 }
 
+async function terminateTask(taskId) {
+  const url = '/api/v1/terminate-task?' + new URLSearchParams({ taskId });
+  const resp = await fetch(url);
+  return await resp.json();
+}
+
 export default function Task() {
-  // const navigation = useNavigation();
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useTimedState(false, 3000);
+  const [terminating, setTerminating] = useTimedState(false, 6000);
   const { task } = useLoaderData();
-  const copyTimer = useRef(undefined);
 
   const copyUrl = (() => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
-    copyTimer.current = setTimeout(() => {
-      setCopied(false);
-      copyTimer.current = undefined;
-    }, 3000);
   })
 
-  useEffect(() => {
-    return () => {
-      if (copyTimer.current) {
-        clearTimeout(copyTimer.current);
-      }
-    }
-  }, []);
+  const terminate = () => {
+    terminateTask(task.id);
+    setTerminating(true);
+  }
 
   return (
     <div>
-      {/* task view here id={task.id} */}
       <h1>Password cracking task</h1>
 
       <p>Following are the passwords that have been recovered</p>
@@ -77,7 +71,18 @@ export default function Task() {
         </table>
       </div>
 
-      <button className='button'>Interrupt</button>
+      {task.status == 'pending' && <div>Task is yet to be started</div>}
+      {task.status == 'progress' && <div>Task is in progress</div>}
+      {task.status == 'done' && <div>Task completed</div>}
+
+      <button
+        className={
+          'button button-terminate ' +
+          (task.status != 'progress' || terminating ? 'disabled' : '')
+        }
+        disabled={task.status != 'progress' || terminating}
+        onClick={terminate}
+      >{terminating ? "Terminating" : "Terminate"}</button>
 
       <p>
         <span>Remember this url:{" "}</span>
@@ -92,4 +97,3 @@ export default function Task() {
     </div>
   )
 }
-

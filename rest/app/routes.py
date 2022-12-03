@@ -71,33 +71,35 @@ def crack():
             request_file = request.files.get('hashFile')
             print(request_file)
             if not request_file or request_file.filename == '':
-                task = {'error': "Input hash file not uploaded"}
+                task = {'error': "Input hash file not uploaded",
+                        'name': 'hashFile'}
                 jsonRes = jsonpickle.encode(task)
                 return Response(response=jsonRes, status=400, mimetype="application/json")
 
             request_file.save(tempfile_path)
             size = os.stat(tempfile_path).st_size
             if size == 0:
-                task = {'error': "Empty file"}
+                task = {'error': "Hash file provided is empty",
+                        'name': 'hashFile'}
                 jsonRes = jsonpickle.encode(task)
                 return Response(response=jsonRes, status=400, mimetype="application/json")
 
         elif inputType == 'text':
-            text = request.form.get('inputText')
+            text = request.form.get('hashText')
             if not text or len(text) == 0:
-                task = {'error': "Empty text"}
+                task = {'error': "The hash text is empty", 'name': 'hashText'}
                 jsonRes = jsonpickle.encode(task)
                 return Response(response=jsonRes, status=400, mimetype="application/json")
-            with open(tempfile_path) as file:
+            with open(tempfile_path, mode='w') as file:
                 file.write(text)
 
         else:
-            task = {'error': "Invalid inputType"}
+            task = {'error': "Invalid inputType", 'name': 'inputType'}
             jsonRes = jsonpickle.encode(task)
             return Response(response=jsonRes, status=400, mimetype="application/json")
 
         size = os.stat(tempfile_path).st_size
-        with open(tempfile_path, mode='r') as file:
+        with open(tempfile_path, mode='rb') as file:
             try:
                 save_file_to_minio(Config.INPUT_BUCKET, hashFile, file, size)
             except Exception as e:
@@ -109,7 +111,19 @@ def crack():
 
     hashType = request.form.get('hashType')
     crackingMode = request.form.get('crackingType')
-    wordlist = request.form.get('wordlist')
+    wordlist = ''
+    if crackingMode == 'wordlist':
+        wordlist = request.form.get('wordlist')
+        if wordlist == '':
+            task = {'error': "Wordlist is empty", 'name': 'wordlist'}
+            jsonRes = jsonpickle.encode(task)
+            return Response(response=jsonRes, status=500, mimetype="application/json")
+        all_wordlist = []
+        if wordlist not in all_wordlist:
+            task = {'error': "Wordlist is not a valid selection",
+                    'name': 'wordlist'}
+            jsonRes = jsonpickle.encode(task)
+            return Response(response=jsonRes, status=500, mimetype="application/json")
 
     task = {}
     task["id"] = gen_id
@@ -148,9 +162,21 @@ def get_task_details():
         jsonRes = jsonpickle.encode(err)
         return Response(response=jsonRes, status=400, mimetype="application/json")
 
+    status = ''
+    query = sqlalchemy.select([User.columns.status]).where(
+        User.columns.userId == taskId)
+    res = db_connection.execute(query).fetchall()
+    if len(res) != 1:
+        err = {'error': f'Task "{taskId}" not found'}
+        jsonRes = jsonpickle.encode(err)
+        return Response(response=jsonRes, status=404, mimetype="application/json")
+    else:
+        status = res[0][0]
+
     task = {
         'id': taskId,
-        'passwords': []
+        'passwords': [],
+        'status': status
     }
 
     query = sqlalchemy.select([Passwords]).where(
@@ -164,6 +190,32 @@ def get_task_details():
             'salt': row[4]
         }
         task['passwords'].append(pwd)
+
+    jsonRes = jsonpickle.encode(task)
+    return Response(response=jsonRes, status=200, mimetype="application/json")
+
+
+@app.route(f"/{__version__}/terminate-task", methods=["GET"])
+def terminate_task():
+    taskId = request.args.get('taskId')
+    if taskId == None:
+        err = {'error': 'Empty taskID'}
+        jsonRes = jsonpickle.encode(err)
+        return Response(response=jsonRes, status=400, mimetype="application/json")
+
+    query = sqlalchemy.select([User.columns.status]).where(
+        User.columns.userId == taskId)
+    res = db_connection.execute(query).fetchall()
+    if len(res) != 1:
+        err = {'error': f'Task "{taskId}" not found'}
+        jsonRes = jsonpickle.encode(err)
+        return Response(response=jsonRes, status=404, mimetype="application/json")
+
+    redisClient.lpush(Config.TERMINATE_KEY, taskId)
+
+    task = {
+        'id': taskId,
+    }
 
     jsonRes = jsonpickle.encode(task)
     return Response(response=jsonRes, status=200, mimetype="application/json")

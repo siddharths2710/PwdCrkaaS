@@ -92,6 +92,7 @@ input[type="radio"] {
 }
 
 .inputTypeWrapper {
+  display: inline-flex;
   padding-left: 5px;
   /* padding-right: 5px; */
 }
@@ -117,7 +118,7 @@ h3 {
 }
 
 .hashInput {
-  margin-top: 20px;
+  margin-top: 0.5em;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -261,6 +262,39 @@ td {
   display: inline-flex;
   align-items: stretch;
   border-radius: 8px;
+}
+
+.errorBorder {
+  border: 2px red solid;
+}
+
+.errorBox {
+  /* background-color: rgb(248, 114, 114); */
+  color: rgb(248, 114, 114);
+  /* color: rgb(71, 0, 0); */
+  /* padding: 12px 16px; */
+  /* border-radius: 16px; */
+  /* margin-bottom: 8px; */
+  display: flex;
+  align-items: center;
+}
+
+.errorBoxWrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.xIcon {
+ stroke: currentColor;
+ fill: currentColor;
+ flex-shrink: 0;
+ /* width: 1.5rem; */
+ height: 0.85rem;
+ margin-right: 5px;
+}
+
+.button-terminate {
+  margin-top: 1em;
 }
 
 /* @media (prefers-color-scheme: light) {

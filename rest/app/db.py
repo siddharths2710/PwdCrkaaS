@@ -45,3 +45,18 @@ meta.create_all(db_engine)
 # )
 # # print(insert_query)
 # db_connection.execute(insert_query)
+
+
+# db_connection.execute(User.delete().where(User.columns.userId == 'abc'))
+
+# insert_query = (
+#     db.insert(User).values(
+#         userId='abc',
+#         crackingMode='single',
+#         hashFile='aaaa',
+#         wordlistFile='bbb',
+#         hashType='crypt',
+#         status='progress')
+# )
+# # print(insert_query)
+# db_connection.execute(insert_query)
