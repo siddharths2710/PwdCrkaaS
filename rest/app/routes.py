@@ -146,10 +146,10 @@ def crack():
 
 @app.route(f"/{__version__}/wordlist", methods=["GET"])
 def list_wordlist():
-    wordlist = []
-    wordlist.append("aaaa")
-    wordlist.append("bbb")
-    jsonRes = jsonpickle.encode(wordlist)
+    all_wordlist = []
+    for wordlist in minioClient.list_objects(Config.WORDLIST_BUCKET):
+        all_wordlist.append(wordlist.object_name)
+    jsonRes = jsonpickle.encode(all_wordlist)
     return Response(response=jsonRes, status=200, mimetype="application/json")
 
 

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Form, redirect, useActionData } from 'react-router-dom';
 import HashInput from '../components/HashInput';
 import Wordlist from '../components/Wordlist';
+import { hashTypes } from '../helper';
 
 export async function submitTask({ request }) {
   const formData = await request.formData();
@@ -33,7 +34,6 @@ async function getWordlist() {
 }
 
 function Home() {
-  const hashTypes = ['crypt', 'md5'];
   const [selectedHashType, setSelectedHashType] = useState(hashTypes[0]);
 
   const crackingTypes = ['single', 'incremental', 'wordlist'];

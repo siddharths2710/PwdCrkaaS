@@ -22,3 +22,15 @@ export function useTimedState(initialState, timeout) {
 
     return [state, setValue];
 }
+
+export const hashTypes = [
+    'crypt',
+    'descrypt',
+    'bsdicrypt',
+    'md5crypt',
+    'bcrypt',
+    'LM',
+    'AFS',
+    'tripcode',
+    'dummy'
+];
