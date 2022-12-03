@@ -21,7 +21,7 @@ __author__ = "Siddharth Srinivasan"
 
 id_hash_map = {}
 id_process_map = {}
-insert_query = db.insert(DBEntities.PASSWORD_TABLE)
+pwd_insert_query = db.insert(DBEntities.PASSWORD_TABLE)
 
 def _get_user_id(pwd_hash):
     for user_id in id_hash_map:
@@ -37,21 +37,23 @@ def _handle_termination(terminate_id):
     id_process_map.pop(terminate_id)
     return True
 
-def _publish_password_outputs():
+def _publish_password_outputs(user_id):
     try:
         pwd_file = open(JohnConfig.OUTPUT_FILE, 'r')
         outputs_list = []
         for line in pwd_file:
             hash, pwd = line.split(':')
-            user_id = _get_user_id(hash)
+            if user_id is None: user_id = _get_user_id(hash)
             if user_id is None:
                 pwd_file.close()
                 raise Exception("User id not found for hash: " + hash)
             outputs_list.append({
                 'userId': user_id, 'hash': hash, 'password': pwd, 'hash_type': 'crypt'
             })
-        result_proxy = DBEntities.CONNECTION.execute(insert_query, outputs_list)
+        result_proxy = DBEntities.CONNECTION.execute(pwd_insert_query, outputs_list)
         pwd_file.close()
+        os.remove(JohnConfig.OUTPUT_FILE)
+        id_process_map.pop(user_id, None)
     except FileNotFoundError as e:
         log_output("_publish_password_outputs: Pwd output file not created for flushing to db", log_level=LOGLEVEL.ERROR)
     except Exception as e:
@@ -79,13 +81,24 @@ except Exception as e: log_output("Error: " + repr(e), log_level=LOGLEVEL.ERROR)
 while True:
         is_terminated, is_completed = False, False
         terminate_id = redisClient.lpop(RedisConfig.TERMINATE_KEY)
-        if terminate_id is not None: is_terminated = _handle_termination(terminate_id); continue
+        if terminate_id is not None: 
+            is_terminated = _handle_termination(terminate_id); 
+            log_output("is_terminated: " + str(is_terminated))
+            continue
         for user_id in id_process_map:
-            if id_process_map[user_id].poll() == 0: is_completed = True; break
-        if is_terminated or is_completed: _publish_password_outputs(); continue
+            if id_process_map[user_id].poll() == 0: 
+                status_update_query = db.update(DBEntities.USER_TABLE) \
+                .where(DBEntities.USER_TABLE.c.userId == user_id).values(status='done')
+                result_proxy = DBEntities.CONNECTION.execute(status_update_query)
+                log_output("is_completed setting to True")
+                is_completed = True; 
+                
+                break
+        if is_terminated or is_completed: _publish_password_outputs(user_id); continue
                 
         
         work = redisClient.lpop(RedisConfig.WORK_KEY)
+        if work is None: continue
         user_id = work.decode('utf-8')
         log_output(f"Received cracking request from user: {user_id}")
         try:
@@ -103,7 +116,7 @@ while True:
             if crackingMode == "wordlist":
                 wordlist_path = os.path.join(dir_path, "wordlist.txt")
                 minioClient.fget_object(MinIOConfig.WORDLIST_BUCKET, wordlistFile, wordlist_path)
-                cmd_params.append(f"--wordlist:\"{wordlist_path}\"")
+                cmd_params.append(f"--wordlist:{wordlist_path}")
             elif crackingMode is not None:
                 cmd_params.append(f"--{crackingMode}")
 
@@ -113,8 +126,11 @@ while True:
                 cmd_params.append(f"--format={hashType}")
 
             cmd_params.append(input_path)
-
-            result = subprocess.run(cmd_params)
+            
+            status_update_query = db.update(DBEntities.USER_TABLE) \
+            .where(DBEntities.USER_TABLE.c.userId == user_id).values(status='progress')
+            result_proxy = DBEntities.CONNECTION.execute(status_update_query)
+            result = subprocess.Popen(cmd_params)
             id_process_map[user_id] = result
         except minio.error.S3Error as e: log_output("MinIO Bucket/File Operation Failure: " + repr(e), log_level=LOGLEVEL.ERROR)
         except minio.error.InvalidResponseError as e: log_output("MinIO API Error: " + repr(e), log_level=LOGLEVEL.ERROR)

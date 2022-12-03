@@ -49,7 +49,7 @@ kubectl $OPERATION -f ../rest/rest-deployment.yaml
 kubectl $OPERATION -f ../rest/rest-service.yaml
 kubectl $OPERATION -f ../rest/rest-ingress.yaml
 
-if [ $1 -eq 0 ]; then
+if [ $1 -eq 1 ]; then
     echo "Port forwarding redis and minio"
     sleep 7
     kubectl port-forward -n minio-ns --address 0.0.0.0 service/minio-proj 9000:9000 &
