@@ -1,8 +1,11 @@
 VERSION=1.0.0
-DOCKERUSER=siddharths2710
+DOCKERUSER=shreyash14s
 
 build:
-	docker build -f Dockerfile-rest -t pwdcrkaas-rest .
+	docker build -f Dockerfile -t pwdcrkaas-rest .
+
+tag:
+	docker tag pwdcrkaas-rest $(DOCKERUSER)/pwdcrkaas-rest:$(VERSION)
 
 push:
 	docker tag pwdcrkaas-rest $(DOCKERUSER)/pwdcrkaas-rest:$(VERSION)
