@@ -117,7 +117,7 @@ def crack():
             task = {'error': "Wordlist is empty", 'name': 'wordlist'}
             jsonRes = jsonpickle.encode(task)
             return Response(response=jsonRes, status=500, mimetype="application/json")
-        all_wordlist = []
+        all_wordlist = get_wordlist()
         if wordlist not in all_wordlist:
             task = {'error': "Wordlist is not a valid selection",
                     'name': 'wordlist'}
@@ -144,11 +144,15 @@ def crack():
     return Response(response=jsonRes, status=200, mimetype="application/json")
 
 
-@app.route(f"/{__version__}/wordlist", methods=["GET"])
-def list_wordlist():
+def get_wordlist():
     all_wordlist = []
     for wordlist in minioClient.list_objects(Config.WORDLIST_BUCKET):
         all_wordlist.append(wordlist.object_name)
+    return all_wordlist
+
+@app.route(f"/{__version__}/wordlist", methods=["GET"])
+def list_wordlist():
+    all_wordlist = get_wordlist()
     jsonRes = jsonpickle.encode(all_wordlist)
     return Response(response=jsonRes, status=200, mimetype="application/json")
 
