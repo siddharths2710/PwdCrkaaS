@@ -52,7 +52,8 @@ def _publish_password_outputs(user_id):
             outputs_list.append({
                 'userId': user_id, 'hash': hash, 'password': pwd, 'hash_type': 'crypt'
             })
-        result_proxy = DBEntities.CONNECTION.execute(pwd_insert_query, outputs_list)
+        with DBEntities.CONNECTION.begin():
+            result_proxy = DBEntities.CONNECTION.execute(pwd_insert_query, outputs_list)
         pwd_file.close()
         os.remove(JohnConfig.OUTPUT_FILE)
         id_process_map.pop(user_id, None)
@@ -91,10 +92,10 @@ while True:
             if id_process_map[user_id].poll() == 0: 
                 status_update_query = db.update(DBEntities.USER_TABLE) \
                 .where(DBEntities.USER_TABLE.c.userId == user_id).values(status='done')
-                result_proxy = DBEntities.CONNECTION.execute(status_update_query)
-                log_output("is_completed setting to True")
-                is_completed = True; 
-                
+                with DBEntities.CONNECTION.begin():
+                    result_proxy = DBEntities.CONNECTION.execute(status_update_query)
+                    log_output("is_completed setting to True")
+                    is_completed = True; 
                 break
         if is_terminated or is_completed: _publish_password_outputs(user_id); continue
                 
