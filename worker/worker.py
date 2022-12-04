@@ -32,7 +32,7 @@ def _get_user_id(pwd_hash):
     return None
 
 def _handle_termination(terminate_id):
-    if terminate_id not in id_process_map: redisClient.lpush(RedisConfig.TERMINATE_KEY, terminate_id); return False
+    if terminate_id not in id_process_map: return False
     prc = id_process_map[terminate_id]
     prc.terminate()
     time.sleep(5)
@@ -85,8 +85,9 @@ while True:
         is_terminated, is_completed = False, False
         terminate_id = redisClient.lpop(RedisConfig.TERMINATE_KEY)
         if terminate_id is not None: 
-            is_terminated = _handle_termination(terminate_id); 
+            is_terminated = _handle_termination(terminate_id);
             log_output("is_terminated: " + str(is_terminated))
+            _publish_password_outputs(user_id)
             continue
         for user_id in id_process_map:
             if id_process_map[user_id].poll() == 0: 

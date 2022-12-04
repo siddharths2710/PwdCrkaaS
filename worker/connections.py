@@ -13,7 +13,8 @@ minioClient = minio.Minio(f"{MinIOConfig.HOST}:{MinIOConfig.PORT}",
 
 class DBEntities(object):
      ENGINE = db.create_engine(f"mysql+pymysql://{MySQLConfig.USER}:{MySQLConfig.PWD}@{MySQLConfig.URI}/{MySQLConfig.DB}")
-     CONNECTION = ENGINE.connect()
+     AUTOCMT = ENGINE.execution_options(isolation_level="AUTOCOMMIT")
+     CONNECTION = AUTOCMT.connect()
      META = db.MetaData()
 
      USER_TABLE = db.Table(
