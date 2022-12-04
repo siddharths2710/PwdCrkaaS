@@ -16,8 +16,6 @@ spec:
       containers:
       - name: pwdcrkaas-worker
         image: siddharths2710/pwdcrkaas-worker:1.0.0
-        command: [ "/bin/bash", "-c", "--" ]
-        args: [ "while true; do sleep 30; done;" ]
         resources:
           limits:
             memory: "2Gi"
