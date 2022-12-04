@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
 import os
-import base64
-import hashlib
-import io
 import uuid
 import tempfile
 
@@ -12,15 +9,15 @@ from app import app
 from app.config import Config
 from app.client import minioClient, redisClient
 from app.db import db_connection, User, Passwords
-from flask import make_response, request, send_file, render_template
+from flask import request, send_file, render_template
 from flask.wrappers import Response
-from werkzeug.utils import secure_filename
 
 import minio
 import sqlalchemy
 
 __version__ = "api/v1"
 
+app.logger.info("Starting server")
 
 def generate_nonc_uuid():
     while True:
