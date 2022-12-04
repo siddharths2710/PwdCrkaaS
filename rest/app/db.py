@@ -9,7 +9,9 @@ MYSQL_PWD = app.config['MYSQL_PWD']
 
 db_engine = db.create_engine(
     f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PWD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}")
-db_connection = db_engine.connect()
+autocommit_engine = db_engine.execution_options(isolation_level="AUTOCOMMIT")
+db_connection = autocommit_engine.connect()
+
 meta = db.MetaData()
 
 User = db.Table(

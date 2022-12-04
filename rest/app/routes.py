@@ -124,16 +124,16 @@ def crack():
     task = {}
     task["id"] = gen_id
 
-    insert_query = (
-        sqlalchemy.insert(User).values(
-            userId=gen_id,
-            crackingMode=crackingMode,
-            hashFile=hashFile,
-            wordlistFile=wordlist,
-            hashType=hashType)
-    )
-    # print(insert_query)
-    db_connection.execute(insert_query)
+    with db_connection.begin():
+        insert_query = (
+            sqlalchemy.insert(User).values(
+                userId=gen_id,
+                crackingMode=crackingMode,
+                hashFile=hashFile,
+                wordlistFile=wordlist,
+                hashType=hashType)
+        )
+        db_connection.execute(insert_query)
 
     redisClient.lpush(Config.WORK_KEY, gen_id)
 
@@ -154,7 +154,7 @@ def list_wordlist():
     return Response(response=jsonRes, status=200, mimetype="application/json")
 
 
-@app.route(f"/{__version__}/task-details", methods=["GET"])
+@app.route(f"/{__version__}/task-details", methods=["GET", "POST"])
 def get_task_details():
     taskId = request.args.get('taskId')
     if taskId == None:
@@ -179,8 +179,8 @@ def get_task_details():
         'status': status
     }
 
-    query = sqlalchemy.select([Passwords]).where(
-        Passwords.columns.userId == taskId)
+    # app.logger.warn("Starting passwords query")
+    query = Passwords.select().where(Passwords.columns.userId == taskId)
     res = db_connection.execute(query).fetchall()
     for row in res:
         pwd = {
@@ -190,6 +190,8 @@ def get_task_details():
             'salt': row[4]
         }
         task['passwords'].append(pwd)
+        # app.logger.warn(f"Password is {pwd}")
+    # app.logger.warn(f"Done with passwords")
 
     jsonRes = jsonpickle.encode(task)
     return Response(response=jsonRes, status=200, mimetype="application/json")
