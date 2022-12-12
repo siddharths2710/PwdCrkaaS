@@ -20,7 +20,7 @@ Video Link: [https://youtu.be/_zqMeB0L7zQ](https://youtu.be/_zqMeB0L7zQ)
 - Python for the backend worker services, and logging service
 - Redis for **session management** and **message queue** implementation
 - MySQL for storing relevant information and metadata for request and output
-  
+- MinIO for Object Storage
 
 ## Project Goals
 - Provide a Password-Cracking Service
